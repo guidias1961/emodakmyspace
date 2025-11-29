@@ -5,11 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EMODAK | Global DB</title>
     
-    <!-- Ethers.js (Para conectar a Carteira) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.11.1/ethers.umd.min.js"></script>
     
     <style>
-        /* --- ESTILO RETRO MYSPACE / MONAD THEME --- */
+        /* --- ESTILO --- */
         body {
             background-color: #1a0b2e;
             background-image: url('https://upload.wikimedia.org/wikipedia/commons/5/59/Monad_Logo_Purple.png');
@@ -21,17 +20,11 @@
             color: #000;
         }
         #container {
-            width: 800px;
-            margin: 15px auto;
-            background-color: #fff;
-            min-height: 100vh;
-            border: 3px solid #200052;
-            box-shadow: 0 0 20px #200052;
+            width: 800px; margin: 15px auto; background-color: #fff;
+            min-height: 100vh; border: 3px solid #200052; box-shadow: 0 0 20px #200052;
         }
         .nav {
-            background-color: #200052;
-            height: 35px;
-            display: flex; align-items: center; justify-content: space-between;
+            background-color: #200052; height: 35px; display: flex; align-items: center; justify-content: space-between;
             padding: 0 15px; color: white; font-weight: bold;
         }
         .grid { display: flex; width: 100%; }
@@ -54,7 +47,8 @@
             background: #f0f0f0; border: 3px solid #200052; padding: 20px; width: 400px;
             box-shadow: 0 0 0 100vmax rgba(0,0,0,0.7); z-index: 999;
         }
-        input, textarea { width: 95%; padding: 5px; margin-bottom: 10px; border: 1px solid #999; }
+        input[type="text"], textarea { width: 95%; padding: 5px; margin-bottom: 10px; border: 1px solid #999; }
+        input[type="file"] { margin-bottom: 10px; width: 100%; }
     </style>
 </head>
 <body>
@@ -68,7 +62,6 @@
     </div>
 
     <div class="grid">
-        <!-- LADO ESQUERDO -->
         <div class="col-left">
             <h2 id="display-name" style="margin-top:0;">Anonymous</h2>
             
@@ -95,7 +88,6 @@
             </div>
         </div>
 
-        <!-- LADO DIREITO -->
         <div class="col-right">
             <div style="border: 1px solid #000; padding: 10px; font-weight: bold; margin-bottom: 10px;">
                 <span class="d-name">User</span> is in your extended network.
@@ -122,26 +114,33 @@
     </div>
 </div>
 
-<!-- EDITOR (Escondido) -->
 <div id="editor">
     <h3>Edit Profile (Global DB)</h3>
-    <label>Name:</label><input id="in-name">
-    <label>Status:</label><input id="in-status">
-    <label>Avatar URL:</label><input id="in-avatar">
-    <label>Interests:</label><input id="in-interests">
-    <label>Bio:</label><textarea id="in-bio" rows="3"></textarea>
-    <button style="background:#200052; color:white; width:100%" onclick="window.saveToFirebase()">SAVE TO CLOUD</button>
+    
+    <label>Name:</label>
+    <input type="text" id="in-name">
+    
+    <label>Status:</label>
+    <input type="text" id="in-status">
+    
+    <label>Upload Avatar Image:</label><br>
+    <input type="file" id="in-avatar-file" accept="image/*"><br>
+    <input type="hidden" id="in-avatar-current"> <label>Interests:</label>
+    <input type="text" id="in-interests">
+    
+    <label>Bio:</label>
+    <textarea id="in-bio" rows="3"></textarea>
+    
+    <button id="btn-save" style="background:#200052; color:white; width:100%" onclick="window.saveToFirebase()">SAVE TO CLOUD</button>
     <button style="width:100%; margin-top:5px;" onclick="document.getElementById('editor').style.display='none'">CANCEL</button>
 </div>
 
-<!-- LÓGICA DO APP (Firebase + Ethers) -->
 <script type="module">
-    // --- IMPORTANDO FIREBASE DIRETO DO GOOGLE (VERSÃO WEB) ---
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
-    import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-analytics.js";
     import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+    // IMPORTANDO O STORAGE (PARA UPLOAD)
+    import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-storage.js";
 
-    // --- SUA CONFIGURAÇÃO (ATUALIZADA) ---
     const firebaseConfig = {
       apiKey: "AIzaSyBwbqR02CLXqGUs_VSOj4oCVcwHdTPkdQo",
       authDomain: "emodak-dd0d7.firebaseapp.com",
@@ -152,95 +151,110 @@
       measurementId: "G-VYHC0VCGP2"
     };
 
-    // --- INICIALIZAÇÃO ---
-    let app, analytics, db;
+    let app, db, storage;
     try {
         app = initializeApp(firebaseConfig);
-        analytics = getAnalytics(app);
         db = getFirestore(app);
-        console.log("🔥 Firebase Online e Conectado!");
+        storage = getStorage(app); // Inicializa Storage
+        console.log("🔥 Firebase + Storage Conectados!");
     } catch (e) {
-        console.error("Erro ao iniciar Firebase:", e);
-        alert("Erro de conexão com o banco de dados. Verifique o console.");
+        console.error("Erro Firebase:", e);
+        alert("Erro de conexão.");
     }
 
     let currentWallet = null;
 
-    // --- CONECTAR CARTEIRA ---
     window.connectWallet = async function() {
-        if (!window.ethereum) return alert("Instale Rabby ou MetaMask para usar!");
-        
+        if (!window.ethereum) return alert("Instale Rabby ou MetaMask!");
         try {
             const provider = new ethers.BrowserProvider(window.ethereum);
             const accounts = await provider.send("eth_requestAccounts", []);
             currentWallet = accounts[0];
-            
             updateUI(currentWallet);
             loadFromFirebase(currentWallet);
-
         } catch (err) {
             alert("Erro Web3: " + err.message);
         }
     }
 
-    // --- LER DADOS DO USUÁRIO ---
     async function loadFromFirebase(wallet) {
         if (!db) return;
-        
         document.getElementById('display-status').innerText = "Loading Cloud Data...";
-        
-        // A chave do usuário é o endereço da carteira
         const docRef = doc(db, "users", wallet.toLowerCase());
         
         try {
             const docSnap = await getDoc(docRef);
-
             if (docSnap.exists()) {
-                const data = docSnap.data();
-                renderProfile(data);
+                renderProfile(docSnap.data());
             } else {
-                console.log("Novo usuário, criando perfil padrão...");
-                const defaultProfile = {
+                renderProfile({
                     name: "New Emo",
                     status: "Just arrived...",
                     avatar: "https://placehold.co/300x300/200052/FFF?text=New",
                     interests: "Nothing yet",
                     bio: "Bio empty."
-                };
-                renderProfile(defaultProfile);
+                });
             }
         } catch (e) {
-            console.error("Erro ao ler do Firestore:", e);
-            alert("Erro ao ler dados. Verifique se as Regras do Firestore estão em modo Teste.");
+            console.error("Erro ao ler:", e);
         }
     }
 
-    // --- SALVAR DADOS NA NUVEM ---
+    // --- NOVA FUNÇÃO DE SALVAR COM UPLOAD ---
     window.saveToFirebase = async function() {
         if (!currentWallet || !db) return;
 
-        const newData = {
-            name: document.getElementById('in-name').value,
-            status: document.getElementById('in-status').value,
-            avatar: document.getElementById('in-avatar').value,
-            interests: document.getElementById('in-interests').value,
-            bio: document.getElementById('in-bio').value,
-            updatedAt: new Date().toISOString()
-        };
+        const btn = document.getElementById('btn-save');
+        btn.innerText = "UPLOADING IMAGE...";
+        btn.disabled = true;
 
         try {
-            // Salva ou atualiza o documento com o ID da carteira
+            // 1. Verifica se tem arquivo para subir
+            const fileInput = document.getElementById('in-avatar-file');
+            let finalAvatarUrl = document.getElementById('in-avatar-current').value; // Começa com o atual
+
+            if (fileInput.files.length > 0) {
+                const file = fileInput.files[0];
+                // Cria referência no Storage: avatars/0x123...
+                const storageRef = ref(storage, `avatars/${currentWallet.toLowerCase()}`);
+                
+                // Faz o Upload
+                await uploadBytes(storageRef, file);
+                
+                // Pega o Link
+                finalAvatarUrl = await getDownloadURL(storageRef);
+                console.log("Imagem enviada! Link:", finalAvatarUrl);
+            }
+
+            // 2. Prepara os dados (agora com a URL correta da imagem)
+            const newData = {
+                name: document.getElementById('in-name').value,
+                status: document.getElementById('in-status').value,
+                avatar: finalAvatarUrl,
+                interests: document.getElementById('in-interests').value,
+                bio: document.getElementById('in-bio').value,
+                updatedAt: new Date().toISOString()
+            };
+
+            // 3. Salva no Banco
             await setDoc(doc(db, "users", currentWallet.toLowerCase()), newData);
-            alert("✅ Perfil salvo na nuvem!");
+            
+            alert("✅ Perfil Atualizado!");
             renderProfile(newData);
             document.getElementById('editor').style.display = 'none';
+
         } catch (e) {
             alert("Erro ao salvar: " + e.message);
             console.error(e);
+            if(e.code === 'storage/unauthorized') {
+                alert("ERRO: Você habilitou o Storage no painel do Firebase?");
+            }
+        } finally {
+            btn.innerText = "SAVE TO CLOUD";
+            btn.disabled = false;
         }
     }
 
-    // --- FUNÇÕES AUXILIARES DE UI ---
     function updateUI(wallet) {
         document.getElementById('auth-area').innerHTML = `<span style="font-size:10px">User: ${wallet.substring(0,6)}...</span>`;
         document.getElementById('wallet-id').innerText = wallet;
@@ -256,13 +270,17 @@
         document.getElementById('display-bio').innerText = data.bio || "";
     }
 
-    // Preenche o editor com os dados atuais
     window.openEditor = function() {
         document.getElementById('in-name').value = document.getElementById('display-name').innerText;
         document.getElementById('in-status').value = document.getElementById('display-status').innerText;
-        document.getElementById('in-avatar').value = document.getElementById('display-img').src;
+        // Salva a URL atual no input hidden para não perder se o cara não fizer upload novo
+        document.getElementById('in-avatar-current').value = document.getElementById('display-img').src;
         document.getElementById('in-interests').value = document.getElementById('display-interests').innerText;
         document.getElementById('in-bio').value = document.getElementById('display-bio').innerText;
+        
+        // Limpa o input de arquivo
+        document.getElementById('in-avatar-file').value = "";
+        
         document.getElementById('editor').style.display = 'block';
     }
 </script>

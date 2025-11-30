@@ -3,105 +3,99 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EMODAK | The Feed</title>
+    <title>EMODAK | Social Feed</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.11.1/ethers.umd.min.js"></script>
     <style>
-        /* --- ESTILOS RETRO --- */
+        /* --- ESTILOS --- */
         body { background-color: #1a0b2e; background-image: url('https://upload.wikimedia.org/wikipedia/commons/5/59/Monad_Logo_Purple.png'); background-size: 60px; font-family: 'Verdana', sans-serif; font-size: 11px; margin: 0; color: #000; }
-        
-        #container { width: 850px; margin: 15px auto; background-color: #fff; min-height: 100vh; border: 3px solid #200052; display: flex; flex-direction: column; }
+        #container { width: 900px; margin: 15px auto; background-color: #fff; min-height: 100vh; border: 3px solid #200052; display: flex; flex-direction: column; }
         
         .nav { background-color: #200052; height: 40px; display: flex; align-items: center; justify-content: space-between; padding: 0 15px; color: white; font-weight: bold; font-size: 14px; }
-        
         .grid { display: flex; flex: 1; }
         
         /* Lateral Esquerda (Perfil) */
         .col-left { width: 280px; background: #E5E5E5; padding: 15px; text-align: center; border-right: 2px solid #000; }
-        .pic-box { border: 2px solid #000; padding: 5px; background: white; margin-bottom: 10px; }
+        .pic-box { border: 2px solid #000; padding: 5px; background: white; margin-bottom: 10px; cursor: pointer;}
         .pic-box img { width: 100%; height: auto; aspect-ratio: 1/1; object-fit: cover; }
+        
+        .stats-box { display: flex; justify-content: space-around; font-size: 10px; margin: 10px 0; background: #ccc; padding: 5px; border: 1px solid #999; }
         
         /* Lateral Direita (Feed) */
         .col-right { flex: 1; padding: 20px; background: #fff; }
 
-        /* Componentes do Feed */
         .post-box { border: 2px solid #200052; background: #f0f0f0; padding: 10px; margin-bottom: 20px; }
-        .post-box textarea { width: 96%; height: 60px; border: 1px solid #999; padding: 5px; font-family: sans-serif; resize: none; }
-        .post-actions { margin-top: 5px; display: flex; justify-content: space-between; align-items: center; }
+        .post-box textarea { width: 96%; height: 60px; border: 1px solid #999; padding: 5px; resize: none; }
         
-        .feed-item { border: 1px solid #ccc; padding: 10px; margin-bottom: 15px; background: #fff; box-shadow: 2px 2px 0px #ccc; }
+        /* Feed Item */
+        .feed-item { border: 1px solid #ccc; padding: 10px; margin-bottom: 15px; background: #fff; box-shadow: 3px 3px 0px #ddd; }
         .feed-header { display: flex; align-items: center; margin-bottom: 8px; border-bottom: 1px dashed #ccc; padding-bottom: 5px; }
-        .feed-avatar { width: 40px; height: 40px; border: 1px solid #000; margin-right: 10px; object-fit: cover; }
-        .feed-info { font-size: 10px; color: #555; }
-        .feed-name { font-weight: bold; font-size: 12px; color: #200052; display: block; }
+        .feed-avatar { width: 40px; height: 40px; border: 1px solid #000; margin-right: 10px; object-fit: cover; cursor: pointer; }
+        .feed-name { font-weight: bold; font-size: 12px; color: #200052; cursor: pointer; }
+        .feed-name:hover { text-decoration: underline; }
         .feed-content { font-size: 12px; line-height: 1.4; margin-bottom: 10px; white-space: pre-wrap; }
         .feed-img { max-width: 100%; border: 1px solid #000; margin-top: 5px; display: block; }
 
-        /* Botões */
+        /* Repost Style */
+        .repost-box { border: 1px solid #200052; background: #f9f9f9; padding: 10px; margin-top: 5px; font-size: 11px; }
+
+        /* Action Bar (Likes/Share) */
+        .action-bar { margin-top: 10px; border-top: 1px solid #eee; padding-top: 5px; display: flex; gap: 15px; }
+        .action-btn { background: none; border: none; cursor: pointer; font-size: 11px; font-weight: bold; color: #555; display: flex; align-items: center; gap: 5px; }
+        .action-btn:hover { color: #200052; }
+        .liked { color: #cc0000 !important; }
+
         button { cursor: pointer; border: 1px solid #000; background: #fff; font-weight: bold; padding: 5px 10px; }
         button:hover { background: #200052; color: white; }
-        .btn-post { background: #200052; color: white; }
+        .btn-follow { width: 100%; background: #200052; color: white; margin-top: 5px; }
+        .btn-following { width: 100%; background: #ccc; color: #000; margin-top: 5px; }
 
-        /* Modal Editor */
         #editor { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #f0f0f0; border: 3px solid #200052; padding: 20px; width: 400px; z-index: 999; box-shadow: 0 0 0 100vmax rgba(0,0,0,0.7); }
-        input[type="text"], textarea { width: 95%; padding: 5px; margin-bottom: 10px; }
     </style>
 </head>
 <body>
 
 <div id="container">
     <div class="nav">
-        <div>💜 EMODAK FEED</div>
+        <div>💜 EMODAK SOCIAL</div>
         <div id="auth-area"><button onclick="connectWallet()">[ Connect Wallet ]</button></div>
     </div>
 
     <div class="grid">
         <!-- PERFIL (ESQUERDA) -->
-        <div class="col-left">
-            <h2 id="display-name" style="margin-top:0;">Guest</h2>
-            <div class="pic-box"><img id="display-img" src="https://placehold.co/300?text=?"></div>
-            <div style="margin-bottom:15px;">"<span id="display-status">...</span>"</div>
-            <button id="edit-btn" style="display:none; width:100%" onclick="openEditor()">Edit Profile</button>
-            <hr>
-            <div style="text-align:left; font-size:10px;">
-                <b>Interests:</b> <span id="display-interests">-</span><br><br>
-                <b>Bio:</b> <span id="display-bio">-</span>
-            </div>
+        <div class="col-left" id="profile-col">
+            <!-- Será preenchido via JS -->
+            <div style="padding:20px;">Connect wallet to see profile...</div>
         </div>
 
         <!-- FEED (DIREITA) -->
         <div class="col-right">
             
-            <!-- Caixa de Postagem -->
             <div class="post-box" id="post-area" style="display:none;">
-                <b>Update your status / Post to feed:</b>
-                <textarea id="post-text" placeholder="Express your sadness..."></textarea>
-                <div class="post-actions">
+                <b>What hurts today?</b>
+                <textarea id="post-text" placeholder="Write something dark..."></textarea>
+                <div style="display:flex; justify-content:space-between; margin-top:5px;">
                     <input type="file" id="post-file" accept="image/*" style="font-size:10px;">
-                    <button class="btn-post" onclick="submitPost()">POST UPDATE</button>
+                    <button style="background:#200052; color:white;" onclick="submitPost()">POST</button>
                 </div>
             </div>
 
-            <div style="border-bottom: 1px solid #000; margin-bottom: 10px; font-weight: bold; color: #200052;">
-                Latest Updates from the Network
+            <div style="margin-bottom: 10px; font-weight: bold; color: #200052; border-bottom: 1px solid #000;">
+                Global Feed
             </div>
 
-            <!-- Onde os posts vão aparecer -->
-            <div id="feed-container">
-                <div style="text-align:center; padding:20px;">Loading feed...</div>
-            </div>
-
+            <div id="feed-container">Loading...</div>
         </div>
     </div>
 </div>
 
-<!-- EDITOR DE PERFIL -->
+<!-- EDITOR -->
 <div id="editor">
     <h3>Edit Profile</h3>
-    <label>Name:</label><input type="text" id="in-name">
-    <label>Status:</label><input type="text" id="in-status">
-    <label>Avatar:</label><br><input type="file" id="in-avatar-file"><br><br>
-    <label>Interests:</label><input type="text" id="in-interests">
-    <label>Bio:</label><textarea id="in-bio"></textarea>
+    <input type="text" id="in-name" placeholder="Name" style="width:95%; margin-bottom:5px;">
+    <input type="text" id="in-status" placeholder="Status" style="width:95%; margin-bottom:5px;">
+    <input type="file" id="in-avatar-file" style="margin-bottom:10px;">
+    <input type="text" id="in-interests" placeholder="Interests" style="width:95%; margin-bottom:5px;">
+    <textarea id="in-bio" placeholder="Bio" style="width:95%; height:50px;"></textarea>
     <input type="hidden" id="in-avatar-current">
     <button onclick="saveProfile()" style="width:100%; background:#200052; color:white;">SAVE</button>
     <button onclick="document.getElementById('editor').style.display='none'" style="width:100%; margin-top:5px;">CANCEL</button>
@@ -109,90 +103,75 @@
 
 <script>
     let currentWallet = null;
-    let currentUserData = { name: 'Guest', avatar: 'https://placehold.co/300' };
+    let viewingWallet = null; // Quem estamos vendo na esquerda
+    let currentUserData = {};
+    let viewingUserData = {};
 
-    // --- INICIALIZAÇÃO ---
-    window.onload = () => {
-        loadFeed(); // Carrega o feed mesmo sem logar
-    };
+    window.onload = () => loadFeed();
 
-    // --- CARTEIRA E PERFIL ---
     async function connectWallet() {
-        if (!window.ethereum) return alert("Install Rabby/MetaMask!");
+        if (!window.ethereum) return alert("Install Wallet!");
         const provider = new ethers.BrowserProvider(window.ethereum);
         const accounts = await provider.send("eth_requestAccounts", []);
         currentWallet = accounts[0];
         
         document.getElementById('auth-area').innerHTML = `User: ${currentWallet.substring(0,6)}...`;
-        document.getElementById('edit-btn').style.display = 'inline-block';
-        document.getElementById('post-area').style.display = 'block'; // Libera postagem
+        document.getElementById('post-area').style.display = 'block';
 
-        loadProfile(currentWallet);
+        // Carrega meu perfil inicialmente
+        loadProfileColumn(currentWallet);
     }
 
-    async function loadProfile(wallet) {
+    // --- CARREGAR COLUNA DA ESQUERDA ---
+    async function loadProfileColumn(wallet) {
+        viewingWallet = wallet;
         try {
             const res = await fetch(`/api/get-profile/${wallet}`);
             const data = await res.json();
-            if (data.name) {
-                currentUserData = data;
-                renderProfile(data);
+            viewingUserData = data;
+            
+            if(wallet === currentWallet) currentUserData = data; // Atualiza meus dados se for eu
+
+            const isMe = currentWallet && wallet.toLowerCase() === currentWallet.toLowerCase();
+            const followers = data.followers ? data.followers.length : 0;
+            const following = data.following ? data.following.length : 0;
+            const isFollowing = currentWallet && data.followers && data.followers.includes(currentWallet);
+
+            let btnHtml = '';
+            if (isMe) {
+                btnHtml = `<button onclick="openEditor()" style="width:100%; margin-top:5px;">Edit Profile</button>`;
+            } else if (currentWallet) {
+                btnHtml = `<button class="${isFollowing ? 'btn-following' : 'btn-follow'}" onclick="followUser('${wallet}')">
+                    ${isFollowing ? 'Following (Unfollow)' : 'Follow'}
+                </button>`;
             }
+
+            const html = `
+                <h2 style="margin-top:0; word-break:break-all;">${data.name || 'Guest'}</h2>
+                <div class="pic-box" onclick="alert('Viewing Profile: ${wallet}')">
+                    <img src="${data.avatar || 'https://placehold.co/300'}" onerror="this.src='https://placehold.co/300'">
+                </div>
+                <div style="margin-bottom:10px;">"${data.status || '...'}"</div>
+                
+                <div class="stats-box">
+                    <div><b>${followers}</b><br>Followers</div>
+                    <div><b>${following}</b><br>Following</div>
+                </div>
+
+                ${btnHtml}
+                <hr>
+                <div style="text-align:left; font-size:10px;">
+                    <b>Interests:</b> ${data.interests || '-'}<br><br>
+                    <b>Bio:</b> ${data.bio || '-'}
+                </div>
+                ${!isMe ? `<div style="margin-top:10px; font-size:9px; color:#555;">ID: ${wallet.substring(0,10)}...</div>` : ''}
+            `;
+            document.getElementById('profile-col').innerHTML = html;
+
         } catch (e) { console.error(e); }
     }
 
-    function renderProfile(data) {
-        document.getElementById('display-name').innerText = data.name || "Guest";
-        document.getElementById('display-status').innerText = data.status || "...";
-        document.getElementById('display-img').src = data.avatar || "https://placehold.co/300";
-        document.getElementById('display-interests').innerText = data.interests || "-";
-        document.getElementById('display-bio').innerText = data.bio || "-";
-    }
-
-    // --- LÓGICA DE POSTAGEM ---
-    async function submitPost() {
-        const text = document.getElementById('post-text').value;
-        const fileInput = document.getElementById('post-file');
-        
-        if (!text && fileInput.files.length === 0) return alert("Write something...");
-
-        let imageUrl = "";
-        
-        // 1. Upload Imagem do Post (se houver)
-        if (fileInput.files.length > 0) {
-            const formData = new FormData();
-            formData.append('file', fileInput.files[0]);
-            
-            // Adiciona wallet para criar nome único
-            formData.append('wallet', currentWallet);
-
-            const res = await fetch('/api/upload', { method: 'POST', body: formData });
-            const data = await res.json();
-            if (data.url) imageUrl = data.url;
-        }
-
-        // 2. Enviar Post
-        const postPayload = {
-            wallet: currentWallet,
-            name: currentUserData.name || "Unknown Emo",
-            avatar: currentUserData.avatar || "https://placehold.co/50",
-            text: text,
-            image: imageUrl
-        };
-
-        await fetch('/api/post', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(postPayload)
-        });
-
-        // Limpar e Recarregar
-        document.getElementById('post-text').value = "";
-        document.getElementById('post-file').value = "";
-        loadFeed();
-    }
-
-    // --- LÓGICA DO FEED ---
+    // --- FEED SYSTEM ---
     async function loadFeed() {
         try {
             const res = await fetch('/api/feed');
@@ -200,39 +179,125 @@
             const container = document.getElementById('feed-container');
             container.innerHTML = "";
 
-            if (posts.length === 0) {
-                container.innerHTML = "<div style='padding:20px; text-align:center'>No posts yet. Be the first to cry.</div>";
-                return;
-            }
+            if (posts.length === 0) return container.innerHTML = "<div style='padding:20px;'>No posts yet.</div>";
 
             posts.forEach(post => {
-                const date = new Date(post.timestamp).toLocaleString();
+                const isLiked = currentWallet && post.likes && post.likes.includes(currentWallet);
+                const likeCount = post.likes ? post.likes.length : 0;
+                
+                // HTML do Conteúdo (Suporta Repost)
+                let contentHtml = `<div class="feed-content">${post.text || ''}</div>`;
+                if (post.image) contentHtml += `<img src="${post.image}" class="feed-img">`;
+
+                if (post.originalPost) {
+                    contentHtml += `
+                        <div class="repost-box">
+                            <b>Repost from ${post.originalPost.name}:</b><br>
+                            ${post.originalPost.text}
+                            ${post.originalPost.image ? '<br>[Image]' : ''}
+                        </div>
+                    `;
+                }
+
                 const html = `
                     <div class="feed-item">
                         <div class="feed-header">
-                            <img src="${post.avatar}" class="feed-avatar">
+                            <img src="${post.avatar}" class="feed-avatar" onclick="loadProfileColumn('${post.wallet}')">
                             <div>
-                                <span class="feed-name">${post.name}</span>
-                                <div class="feed-info">${date}</div>
+                                <span class="feed-name" onclick="loadProfileColumn('${post.wallet}')">${post.name}</span>
+                                <div class="feed-info">${new Date(post.timestamp).toLocaleString()}</div>
                             </div>
                         </div>
-                        <div class="feed-content">${post.text}</div>
-                        ${post.image ? `<img src="${post.image}" class="feed-img">` : ''}
+                        
+                        ${contentHtml}
+
+                        <div class="action-bar">
+                            <button class="action-btn ${isLiked ? 'liked' : ''}" onclick="toggleLike('${post.filename}')">
+                                ${isLiked ? '🖤' : '♡'} ${likeCount} Likes
+                            </button>
+                            <button class="action-btn" onclick="sharePost('${post.id}', '${escape(post.text)}', '${escape(post.name)}')">
+                                🔄 Share
+                            </button>
+                        </div>
                     </div>
                 `;
                 container.innerHTML += html;
             });
 
-        } catch (e) { console.error("Erro feed", e); }
+        } catch (e) { console.error(e); }
     }
 
-    // --- EDITOR ---
+    // --- ACTIONS ---
+    async function submitPost(originalPostData = null) {
+        const text = document.getElementById('post-text').value;
+        const fileInput = document.getElementById('post-file');
+        
+        if (!text && !fileInput.files.length && !originalPostData) return alert("Empty post...");
+
+        let imageUrl = "";
+        if (fileInput.files.length > 0) {
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+            const res = await fetch('/api/upload', { method: 'POST', body: formData });
+            const d = await res.json();
+            if (d.url) imageUrl = d.url;
+        }
+
+        const payload = {
+            wallet: currentWallet,
+            name: currentUserData.name || "Unknown",
+            avatar: currentUserData.avatar || "https://placehold.co/50",
+            text: text,
+            image: imageUrl,
+            originalPost: originalPostData // Se for repost, manda os dados
+        };
+
+        await fetch('/api/post', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(payload)
+        });
+
+        document.getElementById('post-text').value = "";
+        document.getElementById('post-file').value = "";
+        loadFeed();
+    }
+
+    async function toggleLike(filename) {
+        if (!currentWallet) return alert("Connect wallet to like!");
+        await fetch('/api/like', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ wallet: currentWallet, filename })
+        });
+        loadFeed(); // Recarrega para mostrar novo like
+    }
+
+    function sharePost(id, text, name) {
+        const confirmShare = confirm(`Repost this from ${unescape(name)}?`);
+        if (confirmShare) {
+            submitPost({ id, text: unescape(text), name: unescape(name) });
+        }
+    }
+
+    async function followUser(targetWallet) {
+        if (!currentWallet) return alert("Connect wallet!");
+        const res = await fetch('/api/follow', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ follower: currentWallet, target: targetWallet })
+        });
+        const data = await res.json();
+        if (data.success) loadProfileColumn(targetWallet); // Atualiza botão
+    }
+
+    // --- PROFILE EDIT ---
     window.openEditor = function() {
-        document.getElementById('in-name').value = document.getElementById('display-name').innerText;
-        document.getElementById('in-status').value = document.getElementById('display-status').innerText;
-        document.getElementById('in-avatar-current').value = document.getElementById('display-img').src;
-        document.getElementById('in-interests').value = document.getElementById('display-interests').innerText;
-        document.getElementById('in-bio').value = document.getElementById('display-bio').innerText;
+        document.getElementById('in-name').value = currentUserData.name || "";
+        document.getElementById('in-status').value = currentUserData.status || "";
+        document.getElementById('in-avatar-current').value = currentUserData.avatar || "";
+        document.getElementById('in-interests').value = currentUserData.interests || "";
+        document.getElementById('in-bio').value = currentUserData.bio || "";
         document.getElementById('editor').style.display = 'block';
     }
 
@@ -243,14 +308,12 @@
         if (fileInput.files.length > 0) {
             const formData = new FormData();
             formData.append('file', fileInput.files[0]);
-            formData.append('wallet', currentWallet); // Adiciona a wallet no form
-            
             const res = await fetch('/api/upload', { method: 'POST', body: formData });
-            const data = await res.json();
-            if (data.url) avatarUrl = data.url;
+            const d = await res.json();
+            if (d.url) avatarUrl = d.url;
         }
 
-        const profileData = {
+        const data = {
             name: document.getElementById('in-name').value,
             status: document.getElementById('in-status').value,
             avatar: avatarUrl,
@@ -260,12 +323,12 @@
 
         await fetch('/api/save-profile', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ wallet: currentWallet, data: profileData })
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ wallet: currentWallet, data })
         });
-
-        currentUserData = profileData; // Atualiza local
-        renderProfile(profileData);
+        
+        currentUserData = { ...currentUserData, ...data };
+        loadProfileColumn(currentWallet);
         document.getElementById('editor').style.display = 'none';
     }
 </script>

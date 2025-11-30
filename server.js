@@ -8,125 +8,109 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// --- 1. CONFIGURAÇÃO DO VOLUME (STORAGE) ---
-// Define onde os arquivos serão salvos (Volume do Railway ou Pasta Local 'uploads')
+// --- 1. CONFIGURAÇÃO DO VOLUME ---
 const VOLUME_PATH = process.env.RAILWAY_VOLUME_MOUNT_PATH || (process.platform === 'win32' ? path.join(__dirname, 'uploads') : '/app/uploads');
 
-console.log(`📂 Caminho do Volume definido para: ${VOLUME_PATH}`);
+console.log(`📂 Caminho do Volume: ${VOLUME_PATH}`);
 
-// Cria as pastas necessárias se não existirem
+// Garante pastas (Adicionei a pasta 'posts')
 try {
     if (!fs.existsSync(VOLUME_PATH)) fs.mkdirSync(VOLUME_PATH, { recursive: true });
     if (!fs.existsSync(path.join(VOLUME_PATH, 'images'))) fs.mkdirSync(path.join(VOLUME_PATH, 'images'), { recursive: true });
     if (!fs.existsSync(path.join(VOLUME_PATH, 'profiles'))) fs.mkdirSync(path.join(VOLUME_PATH, 'profiles'), { recursive: true });
+    if (!fs.existsSync(path.join(VOLUME_PATH, 'posts'))) fs.mkdirSync(path.join(VOLUME_PATH, 'posts'), { recursive: true });
 } catch (e) {
-    console.error("Erro ao criar pastas do volume:", e);
+    console.error("Erro ao criar pastas:", e);
 }
 
-// Serve as imagens salvas para o público
 app.use('/uploads', express.static(VOLUME_PATH));
-
-// --- 2. SERVIR O SITE (FRONTEND) ---
-// Tenta servir arquivos estáticos da pasta 'public' e da raiz
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.static(__dirname));
 
-// ROTA PRINCIPAL: Lógica "Inteligente" para achar o index.html
+// Rota para entregar o HTML
 app.get('/', (req, res) => {
-    const pathsToCheck = [
-        path.join(__dirname, 'public', 'index.html'),
-        path.join(__dirname, 'index.html'),
-        path.join(__dirname, 'client', 'index.html') // Caso tenha ficado numa subpasta client
-    ];
-
-    let foundPath = null;
-
-    // Procura o arquivo
-    for (const p of pathsToCheck) {
-        if (fs.existsSync(p)) {
-            foundPath = p;
-            break;
-        }
-    }
-
-    if (foundPath) {
-        res.sendFile(foundPath);
-    } else {
-        // SE NÃO ACHAR NADA, MOSTRA O DIAGNÓSTICO NA TELA
-        const rootFiles = fs.readdirSync(__dirname);
-        let publicFiles = [];
-        try { publicFiles = fs.readdirSync(path.join(__dirname, 'public')); } catch(e) { publicFiles = ["(Pasta 'public' não existe)"]; }
-
-        res.send(`
-            <div style="font-family: monospace; background: #222; color: #0f0; padding: 20px;">
-                <h1>⚠️ ERRO: index.html não encontrado</h1>
-                <p>O servidor está rodando, mas não achou seu site.</p>
-                <hr style="border-color: #555;">
-                <h3>Arquivos na raiz do servidor:</h3>
-                <pre>${rootFiles.join('\n')}</pre>
-                <hr style="border-color: #555;">
-                <h3>Arquivos na pasta 'public':</h3>
-                <pre>${publicFiles.join('\n')}</pre>
-                <hr style="border-color: #555;">
-                <p>Verifique se você enviou a pasta 'public' para o GitHub.</p>
-            </div>
-        `);
-    }
+    const paths = [path.join(__dirname, 'public', 'index.html'), path.join(__dirname, 'index.html')];
+    for (const p of paths) if (fs.existsSync(p)) return res.sendFile(p);
+    res.send('Erro: index.html não encontrado.');
 });
 
-// --- 3. CONFIGURAÇÃO DE UPLOAD (MULTER) ---
+// Configuração de Upload
 const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        cb(null, path.join(VOLUME_PATH, 'images'));
-    },
+    destination: (req, file, cb) => cb(null, path.join(VOLUME_PATH, 'images')),
     filename: (req, file, cb) => {
-        const wallet = req.body.wallet || 'unknown';
         const ext = path.extname(file.originalname);
-        cb(null, `${wallet}-${Date.now()}${ext}`);
+        cb(null, `img-${Date.now()}-${Math.round(Math.random() * 1E9)}${ext}`);
     }
 });
 const upload = multer({ storage: storage });
 
-// --- 4. ROTAS DA API ---
+// --- API ROTAS ---
 
-// Salvar Perfil
+// 1. Salvar Perfil
 app.post('/api/save-profile', (req, res) => {
     const { wallet, data } = req.body;
-    if (!wallet) return res.status(400).json({ error: 'Wallet required' });
-
-    const filePath = path.join(VOLUME_PATH, 'profiles', `${wallet.toLowerCase()}.json`);
-    
-    fs.writeFile(filePath, JSON.stringify(data), (err) => {
-        if (err) {
-            console.error("Erro ao salvar:", err);
-            return res.status(500).json({ error: 'Failed to save' });
-        }
+    fs.writeFile(path.join(VOLUME_PATH, 'profiles', `${wallet.toLowerCase()}.json`), JSON.stringify(data), (err) => {
+        if (err) return res.status(500).json({ error: 'Erro ao salvar' });
         res.json({ success: true });
     });
 });
 
-// Ler Perfil
+// 2. Ler Perfil (Com cache simples para não quebrar se não existir)
 app.get('/api/get-profile/:wallet', (req, res) => {
-    const wallet = req.params.wallet.toLowerCase();
-    const filePath = path.join(VOLUME_PATH, 'profiles', `${wallet}.json`);
-
-    if (fs.existsSync(filePath)) {
-        const data = fs.readFileSync(filePath, 'utf8');
-        res.json(JSON.parse(data));
-    } else {
-        res.json(null);
-    }
+    const p = path.join(VOLUME_PATH, 'profiles', `${req.params.wallet.toLowerCase()}.json`);
+    if (fs.existsSync(p)) res.json(JSON.parse(fs.readFileSync(p, 'utf8')));
+    else res.json({ name: 'Unknown Emo', avatar: 'https://placehold.co/300' });
 });
 
-// Upload de Imagem
-app.post('/api/upload-avatar', upload.single('avatar'), (req, res) => {
-    if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
-    const imageUrl = `/uploads/images/${req.file.filename}`;
-    res.json({ url: imageUrl });
+// 3. Upload Imagem
+app.post('/api/upload', upload.single('file'), (req, res) => {
+    if (!req.file) return res.status(400).json({ error: 'No file' });
+    res.json({ url: `/uploads/images/${req.file.filename}` });
 });
 
-// --- INICIAR ---
+// --- NOVO: LÓGICA DO FEED ---
+
+// 4. Criar Post
+app.post('/api/post', (req, res) => {
+    const { wallet, text, image, name, avatar } = req.body;
+    
+    const postData = {
+        id: Date.now(), // Timestamp como ID
+        wallet,
+        name,
+        avatar,
+        text,
+        image,
+        timestamp: new Date().toISOString()
+    };
+
+    // Salva cada post como um arquivo JSON individual
+    const filename = `${postData.id}-${wallet.toLowerCase()}.json`;
+    fs.writeFile(path.join(VOLUME_PATH, 'posts', filename), JSON.stringify(postData), (err) => {
+        if (err) return res.status(500).json({ error: 'Erro ao postar' });
+        res.json({ success: true, post: postData });
+    });
+});
+
+// 5. Ler Feed (Lê todos os arquivos da pasta posts e ordena)
+app.get('/api/feed', (req, res) => {
+    const postsDir = path.join(VOLUME_PATH, 'posts');
+    fs.readdir(postsDir, (err, files) => {
+        if (err) return res.json([]);
+
+        const posts = files
+            .filter(f => f.endsWith('.json'))
+            .map(f => {
+                try {
+                    return JSON.parse(fs.readFileSync(path.join(postsDir, f), 'utf8'));
+                } catch (e) { return null; }
+            })
+            .filter(p => p !== null)
+            .sort((a, b) => b.id - a.id); // Ordena do mais novo para o mais velho
+
+        res.json(posts);
+    });
+});
+
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-    console.log(`🔥 Emodak Server rodando na porta ${PORT}`);
-});
+app.listen(PORT, () => console.log(`🔥 Server On: ${PORT}`));

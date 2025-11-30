@@ -3,51 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EMODAK | Global DB</title>
-    
+    <title>EMODAK | Volume Storage</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.11.1/ethers.umd.min.js"></script>
-    
     <style>
-        /* --- ESTILO --- */
-        body {
-            background-color: #1a0b2e;
-            background-image: url('https://upload.wikimedia.org/wikipedia/commons/5/59/Monad_Logo_Purple.png');
-            background-repeat: repeat;
-            background-size: 60px;
-            font-family: 'Verdana', sans-serif;
-            font-size: 11px;
-            margin: 0;
-            color: #000;
-        }
-        #container {
-            width: 800px; margin: 15px auto; background-color: #fff;
-            min-height: 100vh; border: 3px solid #200052; box-shadow: 0 0 20px #200052;
-        }
-        .nav {
-            background-color: #200052; height: 35px; display: flex; align-items: center; justify-content: space-between;
-            padding: 0 15px; color: white; font-weight: bold;
-        }
+        body { background-color: #1a0b2e; background-image: url('https://upload.wikimedia.org/wikipedia/commons/5/59/Monad_Logo_Purple.png'); background-size: 60px; font-family: 'Verdana', sans-serif; font-size: 11px; margin: 0; color: #000; }
+        #container { width: 800px; margin: 15px auto; background-color: #fff; min-height: 100vh; border: 3px solid #200052; }
+        .nav { background-color: #200052; height: 35px; display: flex; align-items: center; justify-content: space-between; padding: 0 15px; color: white; font-weight: bold; }
         .grid { display: flex; width: 100%; }
         .col-left { width: 300px; background: #E5E5E5; padding: 15px; text-align: center; border-right: 1px solid #999; }
         .col-right { flex: 1; padding: 15px; background: #fff; }
-        
         .pic-box { border: 2px solid #000; padding: 5px; background: white; margin-bottom: 10px; }
-        .pic-box img { width: 100%; height: auto; display: block; object-fit: cover; aspect-ratio: 1/1; }
-        
+        .pic-box img { width: 100%; height: auto; aspect-ratio: 1/1; object-fit: cover; }
         .orange-header { background-color: #200052; color: white; font-weight: bold; padding: 3px 10px; margin-top: 15px; }
-        .contact-box { border: 1px solid #4393B8; background: white; margin-top: 15px; text-align: left; }
-        .contact-head { background: #6699CC; color: white; padding: 3px; font-weight: bold; }
-        
         button { cursor: pointer; border: 1px solid #000; background: #fff; font-weight: bold; padding: 5px; }
-        button:hover { background: #eee; }
-
-        /* Modal Editor */
-        #editor {
-            display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            background: #f0f0f0; border: 3px solid #200052; padding: 20px; width: 400px;
-            box-shadow: 0 0 0 100vmax rgba(0,0,0,0.7); z-index: 999;
-        }
-        input[type="text"], textarea { width: 95%; padding: 5px; margin-bottom: 10px; border: 1px solid #999; }
+        
+        #editor { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #f0f0f0; border: 3px solid #200052; padding: 20px; width: 400px; z-index: 999; box-shadow: 0 0 0 100vmax rgba(0,0,0,0.7); }
+        input[type="text"], textarea { width: 95%; padding: 5px; margin-bottom: 10px; }
         input[type="file"] { margin-bottom: 10px; width: 100%; }
     </style>
 </head>
@@ -55,235 +26,125 @@
 
 <div id="container">
     <div class="nav">
-        <div>💜 EMODAK.DB</div>
-        <div id="auth-area">
-            <button onclick="window.connectWallet()">[ Connect Wallet ]</button>
-        </div>
+        <div>💜 EMODAK.VOL</div>
+        <div id="auth-area"><button onclick="connectWallet()">[ Connect Wallet ]</button></div>
     </div>
 
     <div class="grid">
         <div class="col-left">
             <h2 id="display-name" style="margin-top:0;">Anonymous</h2>
-            
-            <div class="pic-box">
-                <img id="display-img" src="https://placehold.co/300x300/200052/FFF?text=?" 
-                     onerror="this.src='https://placehold.co/300?text=Error'">
-            </div>
-
-            <div style="margin-bottom: 15px;">
-                "<span id="display-status">Offline</span>"<br>
-                <img src="https://i.imgur.com/L7E17m6.gif" style="vertical-align: middle;"> 
-                <span style="font-size: 9px;">Last Login: NOW</span>
-            </div>
-
-            <div class="contact-box">
-                <div class="contact-head">Contacting</div>
-                <div style="padding: 5px; display: grid; grid-template-columns: 1fr 1fr; gap:5px;">
-                    <a>Message</a> <a>Add Friend</a>
-                </div>
-            </div>
-
-            <div style="margin-top:10px; font-size:10px; word-break: break-all;">
-                <b>ID:</b> <span id="wallet-id">...</span>
-            </div>
+            <div class="pic-box"><img id="display-img" src="https://placehold.co/300?text=?"></div>
+            <div style="margin-bottom:15px;">"<span id="display-status">...</span>"<br><span style="font-size:9px;">Last Login: NOW</span></div>
+            <div style="font-size:10px;"><b>ID:</b> <span id="wallet-id">...</span></div>
         </div>
-
         <div class="col-right">
-            <div style="border: 1px solid #000; padding: 10px; font-weight: bold; margin-bottom: 10px;">
-                <span class="d-name">User</span> is in your extended network.
-            </div>
-
-            <div style="text-align: right;">
-                <button id="edit-btn" style="display:none;" onclick="window.openEditor()">[ Edit Profile ]</button>
-            </div>
-
-            <div class="orange-header">Interests</div>
-            <p id="display-interests">Loading...</p>
-
-            <div class="orange-header">About Me</div>
-            <p id="display-bio">Loading...</p>
-
-            <div class="orange-header">Friend Space</div>
-            <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:10px; text-align: center; margin-top:10px;">
-                <div><img src="https://placehold.co/80/200052/FFF?text=T" style="width:100%"><br>Tom</div>
-                <div><img src="https://placehold.co/80/200052/FFF?text=K" style="width:100%"><br>Keone</div>
-                <div><img src="https://placehold.co/80/200052/FFF?text=V" style="width:100%"><br>Vitalik</div>
-                <div><img src="https://placehold.co/80/200052/FFF?text=P" style="width:100%"><br>Pepe</div>
-            </div>
+            <div style="border:1px solid #000; padding:10px; font-weight:bold; margin-bottom:10px;"><span class="d-name">User</span> is in your extended network.</div>
+            <div style="text-align:right;"><button id="edit-btn" style="display:none;" onclick="openEditor()">[ Edit Profile ]</button></div>
+            <div class="orange-header">Interests</div><p id="display-interests">Loading...</p>
+            <div class="orange-header">About Me</div><p id="display-bio">Loading...</p>
         </div>
     </div>
 </div>
 
 <div id="editor">
-    <h3>Edit Profile (Global DB)</h3>
-    
-    <label>Name:</label>
-    <input type="text" id="in-name">
-    
-    <label>Status:</label>
-    <input type="text" id="in-status">
-    
-    <label>Upload Avatar Image:</label><br>
-    <input type="file" id="in-avatar-file" accept="image/*"><br>
-    <input type="hidden" id="in-avatar-current"> <label>Interests:</label>
-    <input type="text" id="in-interests">
-    
-    <label>Bio:</label>
-    <textarea id="in-bio" rows="3"></textarea>
-    
-    <button id="btn-save" style="background:#200052; color:white; width:100%" onclick="window.saveToFirebase()">SAVE TO CLOUD</button>
+    <h3>Edit Profile (Server Storage)</h3>
+    <label>Name:</label><input type="text" id="in-name">
+    <label>Status:</label><input type="text" id="in-status">
+    <label>Upload New Avatar:</label><br><input type="file" id="in-avatar-file" accept="image/*"><br>
+    <input type="hidden" id="in-avatar-current">
+    <label>Interests:</label><input type="text" id="in-interests">
+    <label>Bio:</label><textarea id="in-bio" rows="3"></textarea>
+    <button id="btn-save" style="background:#200052; color:white; width:100%" onclick="saveProfile()">SAVE TO VOLUME</button>
     <button style="width:100%; margin-top:5px;" onclick="document.getElementById('editor').style.display='none'">CANCEL</button>
 </div>
 
-<script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
-    import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
-    // IMPORTANDO O STORAGE (PARA UPLOAD)
-    import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-storage.js";
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyBwbqR02CLXqGUs_VSOj4oCVcwHdTPkdQo",
-      authDomain: "emodak-dd0d7.firebaseapp.com",
-      projectId: "emodak-dd0d7",
-      storageBucket: "emodak-dd0d7.firebasestorage.app",
-      messagingSenderId: "153518440638",
-      appId: "1:153518440638:web:4457282c63e5807a07deef",
-      measurementId: "G-VYHC0VCGP2"
-    };
-
-    let app, db, storage;
-    try {
-        app = initializeApp(firebaseConfig);
-        db = getFirestore(app);
-        storage = getStorage(app); // Inicializa Storage
-        console.log("🔥 Firebase + Storage Conectados!");
-    } catch (e) {
-        console.error("Erro Firebase:", e);
-        alert("Erro de conexão.");
-    }
-
+<script>
     let currentWallet = null;
 
-    window.connectWallet = async function() {
-        if (!window.ethereum) return alert("Instale Rabby ou MetaMask!");
-        try {
-            const provider = new ethers.BrowserProvider(window.ethereum);
-            const accounts = await provider.send("eth_requestAccounts", []);
-            currentWallet = accounts[0];
-            updateUI(currentWallet);
-            loadFromFirebase(currentWallet);
-        } catch (err) {
-            alert("Erro Web3: " + err.message);
-        }
+    async function connectWallet() {
+        if (!window.ethereum) return alert("Instale Rabby/MetaMask!");
+        const provider = new ethers.BrowserProvider(window.ethereum);
+        const accounts = await provider.send("eth_requestAccounts", []);
+        currentWallet = accounts[0];
+        updateUI(currentWallet);
+        loadProfile(currentWallet);
     }
 
-    async function loadFromFirebase(wallet) {
-        if (!db) return;
-        document.getElementById('display-status').innerText = "Loading Cloud Data...";
-        const docRef = doc(db, "users", wallet.toLowerCase());
-        
+    async function loadProfile(wallet) {
         try {
-            const docSnap = await getDoc(docRef);
-            if (docSnap.exists()) {
-                renderProfile(docSnap.data());
-            } else {
-                renderProfile({
-                    name: "New Emo",
-                    status: "Just arrived...",
-                    avatar: "https://placehold.co/300x300/200052/FFF?text=New",
-                    interests: "Nothing yet",
-                    bio: "Bio empty."
-                });
-            }
-        } catch (e) {
-            console.error("Erro ao ler:", e);
-        }
+            const res = await fetch(`/api/get-profile/${wallet}`);
+            const data = await res.json();
+            if (data) renderProfile(data);
+            else renderProfile({ name: "New Emo", status: "Fresh", avatar: "https://placehold.co/300", interests: "-", bio: "-" });
+        } catch (e) { console.error(e); }
     }
 
-    // --- NOVA FUNÇÃO DE SALVAR COM UPLOAD ---
-    window.saveToFirebase = async function() {
-        if (!currentWallet || !db) return;
-
+    async function saveProfile() {
+        if (!currentWallet) return;
         const btn = document.getElementById('btn-save');
-        btn.innerText = "UPLOADING IMAGE...";
-        btn.disabled = true;
+        btn.innerText = "SAVING..."; btn.disabled = true;
 
         try {
-            // 1. Verifica se tem arquivo para subir
+            let avatarUrl = document.getElementById('in-avatar-current').value;
             const fileInput = document.getElementById('in-avatar-file');
-            let finalAvatarUrl = document.getElementById('in-avatar-current').value; // Começa com o atual
 
+            // 1. Upload da imagem (se tiver)
             if (fileInput.files.length > 0) {
-                const file = fileInput.files[0];
-                // Cria referência no Storage: avatars/0x123...
-                const storageRef = ref(storage, `avatars/${currentWallet.toLowerCase()}`);
-                
-                // Faz o Upload
-                await uploadBytes(storageRef, file);
-                
-                // Pega o Link
-                finalAvatarUrl = await getDownloadURL(storageRef);
-                console.log("Imagem enviada! Link:", finalAvatarUrl);
+                const formData = new FormData();
+                formData.append('avatar', fileInput.files[0]);
+                formData.append('wallet', currentWallet);
+
+                const uploadRes = await fetch('/api/upload-avatar', { method: 'POST', body: formData });
+                const uploadData = await uploadRes.json();
+                if (uploadData.url) avatarUrl = uploadData.url;
             }
 
-            // 2. Prepara os dados (agora com a URL correta da imagem)
-            const newData = {
+            // 2. Salvar dados do perfil
+            const profileData = {
                 name: document.getElementById('in-name').value,
                 status: document.getElementById('in-status').value,
-                avatar: finalAvatarUrl,
+                avatar: avatarUrl,
                 interests: document.getElementById('in-interests').value,
-                bio: document.getElementById('in-bio').value,
-                updatedAt: new Date().toISOString()
+                bio: document.getElementById('in-bio').value
             };
 
-            // 3. Salva no Banco
-            await setDoc(doc(db, "users", currentWallet.toLowerCase()), newData);
-            
-            alert("✅ Perfil Atualizado!");
-            renderProfile(newData);
-            document.getElementById('editor').style.display = 'none';
+            await fetch('/api/save-profile', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ wallet: currentWallet, data: profileData })
+            });
 
-        } catch (e) {
-            alert("Erro ao salvar: " + e.message);
-            console.error(e);
-            if(e.code === 'storage/unauthorized') {
-                alert("ERRO: Você habilitou o Storage no painel do Firebase?");
-            }
-        } finally {
-            btn.innerText = "SAVE TO CLOUD";
-            btn.disabled = false;
-        }
+            renderProfile(profileData);
+            document.getElementById('editor').style.display = 'none';
+            alert("✅ Saved to Railway Volume!");
+
+        } catch (e) { alert("Error saving: " + e.message); } 
+        finally { btn.innerText = "SAVE TO VOLUME"; btn.disabled = false; }
     }
 
     function updateUI(wallet) {
-        document.getElementById('auth-area').innerHTML = `<span style="font-size:10px">User: ${wallet.substring(0,6)}...</span>`;
+        document.getElementById('auth-area').innerHTML = `User: ${wallet.substring(0,6)}...`;
         document.getElementById('wallet-id').innerText = wallet;
         document.getElementById('edit-btn').style.display = 'inline-block';
     }
 
     function renderProfile(data) {
-        document.getElementById('display-name').innerText = data.name || "Unknown";
-        document.querySelector('.d-name').innerText = data.name || "User";
-        document.getElementById('display-status').innerText = data.status || "...";
-        document.getElementById('display-img').src = data.avatar || "https://placehold.co/300";
-        document.getElementById('display-interests').innerText = data.interests || "";
-        document.getElementById('display-bio').innerText = data.bio || "";
+        document.getElementById('display-name').innerText = data.name;
+        document.querySelector('.d-name').innerText = data.name;
+        document.getElementById('display-status').innerText = data.status;
+        document.getElementById('display-img').src = data.avatar;
+        document.getElementById('display-interests').innerText = data.interests;
+        document.getElementById('display-bio').innerText = data.bio;
     }
 
     window.openEditor = function() {
         document.getElementById('in-name').value = document.getElementById('display-name').innerText;
         document.getElementById('in-status').value = document.getElementById('display-status').innerText;
-        // Salva a URL atual no input hidden para não perder se o cara não fizer upload novo
         document.getElementById('in-avatar-current').value = document.getElementById('display-img').src;
         document.getElementById('in-interests').value = document.getElementById('display-interests').innerText;
         document.getElementById('in-bio').value = document.getElementById('display-bio').innerText;
-        
-        // Limpa o input de arquivo
-        document.getElementById('in-avatar-file').value = "";
-        
         document.getElementById('editor').style.display = 'block';
     }
 </script>
-
 </body>
 </html>

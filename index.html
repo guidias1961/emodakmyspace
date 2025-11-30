@@ -4,81 +4,39 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EMODAK | Social</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.11.1/ethers.umd.min.js"></script>
     <style>
-        /* --- ESTILOS GERAIS --- */
+        /* --- ESTILOS (Mantidos os originais com pequenos ajustes) --- */
         body { 
             background-color: #1a0b2e; 
             background-image: url('https://upload.wikimedia.org/wikipedia/commons/5/59/Monad_Logo_Purple.png'); 
             background-size: 60px; 
             font-family: 'Verdana', sans-serif; 
-            font-size: 12px; /* Fonte levemente maior para leitura */
+            font-size: 12px;
             margin: 0; 
             color: #000; 
         }
-        
-        /* CONTAINER FLUIDO */
         #container { 
-            width: 95%; 
-            max-width: 900px; 
-            margin: 15px auto; 
-            background-color: #fff; 
-            min-height: 100vh; 
-            border: 3px solid #200052; 
-            display: flex; 
-            flex-direction: column; 
+            width: 95%; max-width: 900px; margin: 15px auto; 
+            background-color: #fff; min-height: 100vh; 
+            border: 3px solid #200052; display: flex; flex-direction: column; 
         }
-        
-        /* NAVBAR RESPONSIVA */
         .nav { 
-            background-color: #200052; 
-            min-height: 40px; 
-            display: flex; 
-            flex-wrap: wrap; 
-            align-items: center; 
-            justify-content: space-between; 
-            padding: 5px 15px; 
-            color: white; 
-            font-weight: bold; 
-            font-size: 14px; 
+            background-color: #200052; min-height: 40px; 
+            display: flex; flex-wrap: wrap; align-items: center; 
+            justify-content: space-between; padding: 5px 15px; 
+            color: white; font-weight: bold; font-size: 14px; 
         }
-        .nav-links { 
-            display: flex; 
-            flex-wrap: wrap; 
-            gap: 10px; 
-            align-items: center; 
-        }
-        .nav-links a { 
-            color: #fff; 
-            text-decoration: none; 
-            cursor: pointer; 
-            border-bottom: 2px solid transparent; 
-            white-space: nowrap; 
-        }
+        .nav-links { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+        .nav-links a { color: #fff; text-decoration: none; cursor: pointer; border-bottom: 2px solid transparent; }
         .nav-links a:hover { border-bottom: 2px solid #fff; }
         
-        #auth-area button { margin-top: 5px; } /* Ajuste mobile */
-
-        /* GRID PRINCIPAL */
         .grid { display: flex; flex: 1; }
-        
-        /* --- COLUNA ESQUERDA (PERFIL) --- */
-        .col-left { 
-            width: 280px; 
-            flex-shrink: 0; /* Não encolhe */
-            background: #E5E5E5; 
-            padding: 15px; 
-            text-align: center; 
-            border-right: 2px solid #000; 
-        }
+        .col-left { width: 280px; flex-shrink: 0; background: #E5E5E5; padding: 15px; text-align: center; border-right: 2px solid #000; }
         .pic-box { border: 2px solid #000; padding: 5px; background: white; margin-bottom: 10px; cursor: pointer; }
         .pic-box img { width: 100%; height: auto; aspect-ratio: 1/1; object-fit: cover; display: block;}
         .stats-box { display: flex; justify-content: space-around; font-size: 10px; margin: 10px 0; background: #ccc; padding: 5px; border: 1px solid #999; }
         
-        /* --- COLUNA DIREITA (FEED) --- */
-        .col-right { flex: 1; padding: 20px; background: #fff; min-width: 0; /* Previne overflow */ }
-        
-        /* POSTAGENS */
+        .col-right { flex: 1; padding: 20px; background: #fff; min-width: 0; }
         .post-box { border: 2px solid #200052; background: #f0f0f0; padding: 10px; margin-bottom: 20px; }
         .post-box textarea { width: 100%; height: 60px; border: 1px solid #999; padding: 5px; resize: none; font-family: sans-serif; box-sizing: border-box; }
         
@@ -86,22 +44,16 @@
         .feed-header { display: flex; align-items: center; margin-bottom: 8px; border-bottom: 1px dashed #ccc; padding-bottom: 5px; }
         .feed-avatar { width: 40px; height: 40px; border: 1px solid #000; margin-right: 10px; object-fit: cover; cursor: pointer; flex-shrink: 0; }
         .feed-name { font-weight: bold; font-size: 12px; color: #200052; cursor: pointer; }
-        .feed-name:hover { text-decoration: underline; }
         .feed-content { font-size: 13px; line-height: 1.5; margin-bottom: 10px; white-space: pre-wrap; word-wrap: break-word; }
         .feed-img { max-width: 100%; border: 1px solid #000; margin-top: 5px; display: block; height: auto; }
         .repost-box { border: 1px solid #200052; background: #f9f9f9; padding: 10px; margin-top: 5px; font-size: 11px; }
-
         .feed-content a { color: #836EF9; font-weight: bold; text-decoration: none; word-break: break-all; }
-        .feed-content a:hover { text-decoration: underline; }
 
-        /* AÇÕES */
         .action-bar { margin-top: 10px; border-top: 1px solid #eee; padding-top: 5px; display: flex; gap: 15px; flex-wrap: wrap; }
         .action-btn { background: none; border: none; cursor: pointer; font-size: 11px; font-weight: bold; color: #555; display: flex; align-items: center; gap: 5px; padding: 5px 0; }
-        .action-btn:hover { color: #200052; }
         .liked { color: #cc0000 !important; }
         .delete-btn { color: #cc0000; margin-left: auto; }
 
-        /* RESPOSTAS */
         .replies-section { background: #f4f4f4; margin-top: 10px; padding: 10px; border-top: 1px solid #ddd; }
         .reply-item { border-bottom: 1px solid #ddd; padding: 5px 0; display: flex; gap: 10px; font-size: 11px; }
         .reply-avatar { width: 30px; height: 30px; border: 1px solid #999; flex-shrink: 0; }
@@ -109,13 +61,11 @@
         .reply-input-area { display: none; margin-top: 10px; }
         .reply-input-area input { width: 70%; padding: 5px; border: 1px solid #999; }
 
-        /* BOTÕES GERAIS */
         button { cursor: pointer; border: 1px solid #000; background: #fff; font-weight: bold; padding: 5px 10px; white-space: nowrap; }
         button:hover { background: #200052; color: white; }
         .btn-follow { width: 100%; background: #200052; color: white; margin-top: 5px; }
         .btn-following { width: 100%; background: #ccc; color: #000; margin-top: 5px; }
 
-        /* MODAL */
         #editor { 
             display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); 
             background: #f0f0f0; border: 3px solid #200052; padding: 20px; 
@@ -124,32 +74,14 @@
         }
         input[type="text"], input[type="file"], textarea { width: 100%; padding: 8px; margin-bottom: 10px; box-sizing: border-box; }
 
-        /* --- MEDIA QUERIES PARA CELULAR --- */
         @media (max-width: 768px) {
             #container { width: 100%; margin: 0; border: none; }
             .grid { flex-direction: column; }
-            
-            /* Coluna da Esquerda (Perfil) vira topo */
-            .col-left { 
-                width: 100%; 
-                border-right: none; 
-                border-bottom: 2px solid #000;
-                box-sizing: border-box;
-                padding: 10px;
-            }
-            
-            .pic-box { width: 120px; margin: 0 auto 10px auto; } /* Foto menor no mobile */
-            
-            /* Coluna da Direita (Feed) */
+            .col-left { width: 100%; border-right: none; border-bottom: 2px solid #000; box-sizing: border-box; padding: 10px; }
+            .pic-box { width: 120px; margin: 0 auto 10px auto; }
             .col-right { width: 100%; padding: 10px; box-sizing: border-box; }
-            
-            .post-actions { flex-direction: column; gap: 10px; align-items: stretch; }
-            .post-actions button { width: 100%; }
-            
             .nav { justify-content: center; gap: 10px; padding-bottom: 10px; }
             #auth-area { width: 100%; text-align: center; }
-            
-            .reply-input-area input { width: 60%; }
         }
     </style>
 </head>
@@ -160,18 +92,15 @@
         <div class="nav-links">
             <span style="margin-right:10px; font-size:16px;">💜 EMODAK</span>
             <a onclick="navToPage('feed')">[ FEED ]</a>
-            <a onclick="navToPage('profile', currentWallet)">[ PROFILE]</a>
+            <a onclick="navToPage('profile', currentWallet)">[ PROFILE ]</a>
         </div>
         <div id="auth-area"><button onclick="connectWallet()">[ Connect Wallet ]</button></div>
     </div>
 
     <div class="grid">
-        <!-- COLUNA ESQUERDA -->
         <div class="col-left" id="profile-col">
             <div style="padding:20px;">Connect wallet to see profile...</div>
         </div>
-
-        <!-- COLUNA DIREITA -->
         <div class="col-right">
             <div class="post-box" id="post-area" style="display:none;">
                 <b id="post-title">Update Global Feed:</b>
@@ -181,17 +110,14 @@
                     <button style="background:#200052; color:white;" onclick="submitPost()">POST</button>
                 </div>
             </div>
-
             <div style="margin-bottom: 10px; font-weight: bold; color: #200052; border-bottom: 1px solid #000;" id="feed-title">
                 Global Feed
             </div>
-
             <div id="feed-container">Loading...</div>
         </div>
     </div>
 </div>
 
-<!-- EDITOR -->
 <div id="editor">
     <h3>Edit Profile</h3>
     <input type="text" id="in-name" placeholder="Name">
@@ -207,15 +133,96 @@
     </div>
 </div>
 
-<script>
-    let currentWallet = null;
-    let currentUserData = {};
-    let currentPage = 'feed'; 
-    let currentProfileView = null; 
+<script type="module">
+    // --- IMPORTS DO REOWN / APP KIT & ETHERS VIA CDN ---
+    import { createAppKit } from 'https://esm.sh/@reown/appkit@1.1.2';
+    import { EthersAdapter } from 'https://esm.sh/@reown/appkit-adapter-ethers@1.1.2';
+    import { mainnet, arbitrum, polygon } from 'https://esm.sh/@reown/appkit/networks';
+    import { ethers } from 'https://esm.sh/ethers@6.13.1';
 
-    window.onload = () => navToPage('feed');
+    // --- CONFIGURAÇÃO ---
+    // ⚠️ SUBSTITUA PELO SEU PROJECT ID DO REOWN CLOUD (GRÁTIS) ⚠️
+    const projectId = 11af2aea7727c6807d6da946f95a12e8; 
 
-    function formatText(text) {
+    const networks = [mainnet, arbitrum, polygon];
+
+    // Cria o Modal do AppKit
+    const modal = createAppKit({
+        adapters: [new EthersAdapter()],
+        networks,
+        metadata: {
+            name: 'Emodak',
+            description: 'Social Dark',
+            url: 'https://emodak.com', // Coloque sua URL real quando tiver
+            icons: ['https://avatars.githubusercontent.com/u/179229932']
+        },
+        projectId,
+        features: {
+            analytics: true
+        }
+    });
+
+    // --- VARIÁVEIS GLOBAIS ---
+    // Como estamos num módulo, precisamos anexar explicitamente ao 'window' para o HTML acessar
+    window.currentWallet = null;
+    window.currentUserData = {};
+    window.currentPage = 'feed';
+    window.currentProfileView = null;
+    
+    // Variável para armazenar o provider do Ethers vindo do AppKit
+    let ethersProvider = null;
+
+    // --- INICIALIZAÇÃO ---
+    window.onload = () => {
+        navToPage('feed');
+        // Verifica se já está conectado ao carregar
+        if (modal.getIsConnected()) {
+            handleConnection(modal.getAddress());
+        }
+    };
+
+    // Monitorar mudanças de estado (Conexão/Desconexão)
+    modal.subscribeState(state => {
+        if (state.selectedNetworkId && state.address) {
+            if (window.currentWallet !== state.address) {
+                handleConnection(state.address);
+            }
+        } else {
+            // Desconectou
+            window.currentWallet = null;
+            document.getElementById('auth-area').innerHTML = `<button onclick="connectWallet()">[ Connect Wallet ]</button>`;
+            document.getElementById('post-area').style.display = 'none';
+        }
+    });
+
+    async function handleConnection(address) {
+        window.currentWallet = address;
+        
+        // Configura o provider do ethers usando o WalletProvider do AppKit
+        const walletProvider = modal.getProvider();
+        if (walletProvider) {
+            ethersProvider = new ethers.BrowserProvider(walletProvider);
+        }
+
+        document.getElementById('auth-area').innerHTML = `<span style="font-size:10px;">User: ${window.currentWallet.substring(0,6)}...</span> <button onclick="disconnectWallet()" style="font-size:9px">X</button>`;
+        document.getElementById('post-area').style.display = 'block';
+
+        if (window.currentPage === 'feed') loadProfileColumn(window.currentWallet);
+        else if (window.currentPage === 'profile') navToPage('profile', window.currentProfileView || window.currentWallet);
+    }
+
+    // --- FUNÇÕES EXPOSTAS PARA O HTML (window.X) ---
+
+    window.connectWallet = async function() {
+        // Abre o modal. No celular, isso mostra as opções de abrir o App
+        await modal.open();
+    }
+
+    window.disconnectWallet = async function() {
+        await modal.disconnect();
+    }
+
+    window.formatText = function(text) {
         if (!text) return '';
         const urlRegex = /(https?:\/\/[^\s]+)|(www\.[^\s]+)/g;
         return text.replace(urlRegex, (url) => {
@@ -224,56 +231,41 @@
         });
     }
 
-    async function connectWallet() {
-        if (!window.ethereum) return alert("Install Rabby or MetaMask!");
-        const provider = new ethers.BrowserProvider(window.ethereum);
-        const accounts = await provider.send("eth_requestAccounts", []);
-        currentWallet = accounts[0];
-        
-        document.getElementById('auth-area').innerHTML = `<span style="font-size:10px;">User: ${currentWallet.substring(0,6)}...</span>`;
-        document.getElementById('post-area').style.display = 'block';
-
-        if (currentPage === 'feed') loadProfileColumn(currentWallet);
-        else if (currentPage === 'profile') navToPage('profile', currentProfileView || currentWallet);
-    }
-
-    function navToPage(page, wallet = null) {
-        currentPage = page;
+    window.navToPage = function(page, wallet = null) {
+        window.currentPage = page;
         if (page === 'feed') {
-            currentProfileView = currentWallet; 
+            window.currentProfileView = window.currentWallet; 
             document.getElementById('feed-title').innerText = "Global Feed";
             document.getElementById('post-title').innerText = "Update Global Feed:";
             loadFeed(null);
         } else if (page === 'profile') {
-            if (!wallet && !currentWallet) return alert("Connect wallet first!");
-            const target = wallet || currentWallet;
-            currentProfileView = target;
-            document.getElementById('feed-title').innerText = (target === currentWallet) ? "My Posts" : "User Posts";
+            if (!wallet && !window.currentWallet) return alert("Connect wallet first!");
+            const target = wallet || window.currentWallet;
+            window.currentProfileView = target;
+            document.getElementById('feed-title').innerText = (target === window.currentWallet) ? "My Posts" : "User Posts";
             document.getElementById('post-title').innerText = "Post to this wall:";
             loadFeed(target);
         }
-        if (currentProfileView) loadProfileColumn(currentProfileView);
-        
-        // Scroll to top on navigation (UX mobile)
+        if (window.currentProfileView) loadProfileColumn(window.currentProfileView);
         window.scrollTo(0,0);
     }
 
-    async function loadProfileColumn(wallet) {
+    window.loadProfileColumn = async function(wallet) {
         if(!wallet) return;
         try {
             const res = await fetch(`/api/get-profile/${wallet}`);
             const data = await res.json();
-            if(wallet === currentWallet) currentUserData = data; 
+            if(wallet === window.currentWallet) window.currentUserData = data; 
 
-            const isMe = currentWallet && wallet.toLowerCase() === currentWallet.toLowerCase();
+            const isMe = window.currentWallet && wallet.toLowerCase() === window.currentWallet.toLowerCase();
             const followers = data.followers ? data.followers.length : 0;
             const following = data.following ? data.following.length : 0;
-            const isFollowing = currentWallet && data.followers && data.followers.includes(currentWallet);
+            const isFollowing = window.currentWallet && data.followers && data.followers.includes(window.currentWallet);
 
             let btnHtml = '';
             if (isMe) {
                 btnHtml = `<button onclick="openEditor()" style="width:100%; margin-top:5px;">Edit Profile</button>`;
-            } else if (currentWallet) {
+            } else if (window.currentWallet) {
                 btnHtml = `<button class="${isFollowing ? 'btn-following' : 'btn-follow'}" onclick="followUser('${wallet}')">
                     ${isFollowing ? 'Following (Unfollow)' : 'Follow'}
                 </button>`;
@@ -285,12 +277,10 @@
                     <img src="${data.avatar || 'https://placehold.co/300'}" onerror="this.src='https://placehold.co/300'">
                 </div>
                 <div style="margin-bottom:10px; font-style:italic;">"${data.status || '...'}"</div>
-                
                 <div class="stats-box">
                     <div><b>${followers}</b><br>Followers</div>
                     <div><b>${following}</b><br>Following</div>
                 </div>
-
                 ${btnHtml}
                 <hr>
                 <div style="text-align:left; font-size:11px;">
@@ -303,7 +293,7 @@
         } catch (e) { console.error(e); }
     }
 
-    async function loadFeed(walletFilter) {
+    window.loadFeed = async function(walletFilter) {
         try {
             const url = walletFilter ? `/api/feed?wallet=${walletFilter}` : '/api/feed';
             const res = await fetch(url);
@@ -314,10 +304,10 @@
             if (posts.length === 0) return container.innerHTML = "<div style='padding:20px; text-align:center'>No posts yet.</div>";
 
             posts.forEach(post => {
-                const isLiked = currentWallet && post.likes && post.likes.includes(currentWallet);
+                const isLiked = window.currentWallet && post.likes && post.likes.includes(window.currentWallet);
                 const likeCount = post.likes ? post.likes.length : 0;
                 
-                const isOwner = currentWallet && post.wallet && post.wallet.toLowerCase() === currentWallet.toLowerCase();
+                const isOwner = window.currentWallet && post.wallet && post.wallet.toLowerCase() === window.currentWallet.toLowerCase();
                 const deleteBtn = isOwner ? 
                     `<button class="action-btn delete-btn" onclick="deletePost('${post.filename}')">🗑️</button>` : '';
 
@@ -393,21 +383,21 @@
         } catch (e) { console.error(e); }
     }
 
-    function toggleReplyBox(id) {
-        if (!currentWallet) return alert("Connect wallet!");
+    window.toggleReplyBox = function(id) {
+        if (!window.currentWallet) return alert("Connect wallet!");
         const box = document.getElementById(`reply-box-${id}`);
         box.style.display = box.style.display === 'none' || box.style.display === '' ? 'block' : 'none';
     }
 
-    async function submitReply(filename, id) {
+    window.submitReply = async function(filename, id) {
         const text = document.getElementById(`reply-text-${id}`).value;
         if (!text) return;
 
         const payload = {
             filename: filename,
-            wallet: currentWallet,
-            name: currentUserData.name || "Unknown",
-            avatar: currentUserData.avatar || "https://placehold.co/50",
+            wallet: window.currentWallet,
+            name: window.currentUserData.name || "Unknown",
+            avatar: window.currentUserData.avatar || "https://placehold.co/50",
             text: text
         };
 
@@ -417,11 +407,11 @@
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify(payload)
             });
-            loadFeed(currentProfileView === currentWallet ? currentWallet : (currentPage === 'feed' ? null : currentProfileView));
+            loadFeed(window.currentProfileView === window.currentWallet ? window.currentWallet : (window.currentPage === 'feed' ? null : window.currentProfileView));
         } catch(e) { alert("Error replying"); }
     }
 
-    async function submitPost(originalPostData = null) {
+    window.submitPost = async function(originalPostData = null) {
         const text = document.getElementById('post-text').value;
         const fileInput = document.getElementById('post-file');
         
@@ -431,16 +421,16 @@
         if (fileInput.files.length > 0) {
             const formData = new FormData();
             formData.append('file', fileInput.files[0]);
-            formData.append('wallet', currentWallet);
+            formData.append('wallet', window.currentWallet);
             const res = await fetch('/api/upload', { method: 'POST', body: formData });
             const d = await res.json();
             if (d.url) imageUrl = d.url;
         }
 
         const payload = {
-            wallet: currentWallet,
-            name: currentUserData.name || "Unknown",
-            avatar: currentUserData.avatar || "https://placehold.co/50",
+            wallet: window.currentWallet,
+            name: window.currentUserData.name || "Unknown",
+            avatar: window.currentUserData.avatar || "https://placehold.co/50",
             text: text,
             image: imageUrl,
             originalPost: originalPostData
@@ -455,54 +445,54 @@
         document.getElementById('post-text').value = "";
         document.getElementById('post-file').value = "";
         
-        loadFeed(currentProfileView === currentWallet ? currentWallet : (currentPage === 'feed' ? null : currentProfileView));
+        loadFeed(window.currentProfileView === window.currentWallet ? window.currentWallet : (window.currentPage === 'feed' ? null : window.currentProfileView));
     }
 
-    async function deletePost(filename) {
+    window.deletePost = async function(filename) {
         if(!confirm("Are you sure?")) return;
         try {
             await fetch('/api/delete-post', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ wallet: currentWallet, filename })
+                body: JSON.stringify({ wallet: window.currentWallet, filename })
             });
-            loadFeed(currentProfileView === currentWallet ? currentWallet : (currentPage === 'feed' ? null : currentProfileView));
+            loadFeed(window.currentProfileView === window.currentWallet ? window.currentWallet : (window.currentPage === 'feed' ? null : window.currentProfileView));
         } catch (e) { alert("Error deleting."); }
     }
 
-    async function toggleLike(filename) {
-        if (!currentWallet) return alert("Connect wallet to like!");
+    window.toggleLike = async function(filename) {
+        if (!window.currentWallet) return alert("Connect wallet to like!");
         await fetch('/api/like', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ wallet: currentWallet, filename })
+            body: JSON.stringify({ wallet: window.currentWallet, filename })
         });
-        loadFeed(currentPage === 'feed' ? null : currentProfileView);
+        loadFeed(window.currentPage === 'feed' ? null : window.currentProfileView);
     }
 
-    function sharePost(id, text, name) {
+    window.sharePost = function(id, text, name) {
         if(confirm(`Repost from ${unescape(name)}?`)) {
             submitPost({ id, text: unescape(text), name: unescape(name) });
         }
     }
 
-    async function followUser(targetWallet) {
-        if (!currentWallet) return alert("Connect wallet!");
+    window.followUser = async function(targetWallet) {
+        if (!window.currentWallet) return alert("Connect wallet!");
         const res = await fetch('/api/follow', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ follower: currentWallet, target: targetWallet })
+            body: JSON.stringify({ follower: window.currentWallet, target: targetWallet })
         });
         const data = await res.json();
         if (data.success) loadProfileColumn(targetWallet);
     }
 
     window.openEditor = function() {
-        document.getElementById('in-name').value = currentUserData.name || "";
-        document.getElementById('in-status').value = currentUserData.status || "";
-        document.getElementById('in-avatar-current').value = currentUserData.avatar || "";
-        document.getElementById('in-interests').value = currentUserData.interests || "";
-        document.getElementById('in-bio').value = currentUserData.bio || "";
+        document.getElementById('in-name').value = window.currentUserData.name || "";
+        document.getElementById('in-status').value = window.currentUserData.status || "";
+        document.getElementById('in-avatar-current').value = window.currentUserData.avatar || "";
+        document.getElementById('in-interests').value = window.currentUserData.interests || "";
+        document.getElementById('in-bio').value = window.currentUserData.bio || "";
         document.getElementById('editor').style.display = 'block';
     }
 
@@ -513,7 +503,7 @@
         if (fileInput.files.length > 0) {
             const formData = new FormData();
             formData.append('file', fileInput.files[0]);
-            formData.append('wallet', currentWallet);
+            formData.append('wallet', window.currentWallet);
             const res = await fetch('/api/upload', { method: 'POST', body: formData });
             const d = await res.json();
             if (d.url) avatarUrl = d.url;
@@ -530,11 +520,11 @@
         await fetch('/api/save-profile', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ wallet: currentWallet, data })
+            body: JSON.stringify({ wallet: window.currentWallet, data })
         });
         
-        currentUserData = { ...currentUserData, ...data };
-        loadProfileColumn(currentWallet);
+        window.currentUserData = { ...window.currentUserData, ...data };
+        loadProfileColumn(window.currentWallet);
         document.getElementById('editor').style.display = 'none';
     }
 </script>
